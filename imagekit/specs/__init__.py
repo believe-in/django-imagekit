@@ -1,4 +1,5 @@
 from copy import copy
+from StringIO import StringIO
 from django.conf import settings
 from django.db.models.fields.files import ImageFieldFile
 from ..cachefiles.backends import get_default_cachefile_backend
@@ -146,12 +147,14 @@ class ImageSpec(BaseImageSpec):
         # TODO: Move into a generator base class
         # TODO: Factor out a generate_image function so you can create a generator and only override the PIL.Image creating part. (The tricky part is how to deal with original_format since generator base class won't have one.)
         try:
-            img = open_image(self.source)
+            fd = StringIO(self.source.read())
+            img = open_image(fd)
         except ValueError:
 
             # Re-open the file -- https://code.djangoproject.com/ticket/13750
             self.source.open()
-            img = open_image(self.source)
+            fd = StringIO(self.source.read())
+            img = open_image(fd)
 
         return process_image(img, processors=self.processors,
                              format=self.format, autoconvert=self.autoconvert,
